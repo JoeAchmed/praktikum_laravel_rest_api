@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Date;
 
 class StudentController extends Controller
 {
@@ -15,7 +14,13 @@ class StudentController extends Controller
     {
         // yang telah di provide laravel
         $students = Student::all();
-        return response()->json($students, 200);
+
+        $result = [
+            'message' => 'Success',
+            'data' => $students
+        ];
+
+        return response()->json($result, 200);
     }
 
     /**
@@ -24,20 +29,40 @@ class StudentController extends Controller
     public function store(Request $request)
     {
         $input = [
-            'nama' => $request->nama,
-            'nim' => $request->nim,
-            'email' => $request->email,
-            'jurusan' => $request->jurusan
+            'nama' => $request->nama ?? "",
+            'nim' => $request->nim ?? "",
+            'email' => $request->email ?? "",
+            'jurusan' => $request->jurusan ?? ""
         ];
 
-        $students = Student::create($input);
+        $student = Student::create($input);
 
         $result = [
             'message' => 'Data berhasil dibuat',
-            'data' => $students
+            'data' => $student
         ];
 
         return response()->json($result, 201);
+    }
+
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        $student = Student::find($id);
+
+        if (!$student) {
+            return response()->json(['message' => "Data student dengan id $id tidak ditemukan"], 404);
+        }
+
+        $result = [
+            'message' => 'Success',
+            'data' => $student
+        ];
+
+        return response()->json($result, 200);
     }
 
     /**
@@ -48,17 +73,20 @@ class StudentController extends Controller
         $student = Student::find($id);
 
         if (!$student) {
-            return response()->json(['message' => 'Data student tidak ditemukan'], 404);
+            return response()->json(['message' => "Data student dengan id $id tidak ditemukan"], 404);
         }
 
-        $student->nama = $request->nama;
-        $student->nim = $request->nim;
-        $student->email = $request->email;
-        $student->jurusan = $request->jurusan;
+        $student->update([
+            'nama' => $request->nama ?? $student->nama,
+            'nim' => $request->nim ?? $student->nim,
+            'email' => $request->email ?? $student->email,
+            'jurusan' => $request->jurusan ?? $student->jurusan
+        ]);
+        
         $student->save();
 
         $result = [
-            'message' => 'Data student berhasil diperbarui',
+            'message' => "Data student dengan id $id berhasil diperbarui",
             'data' => $student
         ];
 
@@ -73,14 +101,13 @@ class StudentController extends Controller
         $student = Student::find($id);
 
         if (!$student) {
-            return response()->json(['message' => 'Data student tidak ditemukan'], 404);
+            return response()->json(['message' => "Data student dengan id $id tidak ditemukan"], 404);
         }
 
         $student->delete();
 
         $result = [
-            'message' => 'Data student berhasil dihapus',
-            'data' => $student
+            'message' => "Data student dengan id $id berhasil dihapus",
         ];
 
         return response()->json($result, 200);
