@@ -12,8 +12,33 @@ class StudentController extends Controller
      */
     public function index()
     {
-        // yang telah di provide laravel
-        $students = Student::all();
+        // Check if the 'sort' and 'order' parameters are present in the URL
+        if (request()->has('sort') && request()->has('order')) {
+            // Get the values of 'sort' and 'order' parameters from the URL
+            $sort = request('sort');
+            $order = request('order');
+
+            // Validate the 'order' parameter to prevent SQL injection
+            $validOrders = ['asc', 'desc'];
+            $order = in_array(strtolower($order), $validOrders) ? strtolower($order) : 'asc';
+
+            // Apply sorting based on 'sort' and 'order' parameters
+            $students = Student::orderBy($sort, $order)->get();
+        } else if (request()->has('name')) {
+            // Get the value of 'name' parameter from the URL
+            $name = request('name');
+
+            // Filter students by name
+            $students = Student::where('nama', 'LIKE', "%$name%")->get();
+        } else if (request()->has('major')) {
+            // Get the value of 'major' parameter from the URL
+            $major = request('major');
+
+            // Filter students by name
+            $students = Student::where('jurusan', 'LIKE', "%$major%")->get();
+        } else {
+            $students = Student::all();
+        }
 
         $result = [
             'message' => 'Success',
@@ -28,21 +53,21 @@ class StudentController extends Controller
      */
     public function store(Request $request)
     {
-        $input = [
-            'nama' => $request->nama ?? "",
-            'nim' => $request->nim ?? "",
-            'email' => $request->email ?? "",
-            'jurusan' => $request->jurusan ?? ""
-        ];
+        $validateData = $request->validate([
+            'nama' => 'required',
+            'nim' => 'numeric|required',
+            'email' => 'email|required',
+            'jurusan' => 'required'
+        ]);
 
-        $student = Student::create($input);
+        $student = Student::create($validateData);
 
-        $result = [
-            'message' => 'Data berhasil dibuat',
+        $data = [
+            'message' => 'Student is created successfully',
             'data' => $student
         ];
 
-        return response()->json($result, 201);
+        return response()->json($data, 201);
     }
 
 
@@ -82,7 +107,7 @@ class StudentController extends Controller
             'email' => $request->email ?? $student->email,
             'jurusan' => $request->jurusan ?? $student->jurusan
         ]);
-        
+
         $student->save();
 
         $result = [
